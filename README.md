@@ -1,4 +1,4 @@
-secs
+SECS
 ====
 
 Scala Entity Component System
