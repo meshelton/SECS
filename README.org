@@ -1,0 +1,13 @@
+* SECS
+  S.E.C.S or Scala Entity Component System is an open source entity system written in scala and primarily targeted towards game developers.
+
+** Getting Started and Documentation
+   The code in the example directory has is a great place to start with this library.
+** Building
+   Build using sbt 13.5
+** Contact
+   michael.e.shelton@gmail.com
+** Authors
+   Michael Shelton
+** License
+   Gnu GPL v2 see LICENSE for more details
