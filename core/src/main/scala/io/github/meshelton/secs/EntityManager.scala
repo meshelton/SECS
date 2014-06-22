@@ -25,7 +25,7 @@ case class Entity protected[secs](val id: UUID, val tag: String = "No tag provid
 class EntityManager {
 
   private val entities = ArrayBuffer[Entity]()
-  private val componentManagers = ArrayBuffer[ComponentManager]()
+  private val componentManagers = ArrayBuffer[ComponentManager[_]]()
   private val systems = ArrayBuffer[System]()
 
   /**
@@ -93,7 +93,7 @@ class EntityManager {
     * 
     * @param componentManager the ComponentManager to be registered
     */
-  def registerComponentManager(componentManager: ComponentManager) = {
+  def registerComponentManager(componentManager: ComponentManager[_]) = {
     componentManagers += componentManager
   }
 
@@ -102,7 +102,7 @@ class EntityManager {
     * 
     * @param componentManager the ComponentManager to be deregistered
     */
-  def deregisterComponentManager(componentManager: ComponentManager) = {
+  def deregisterComponentManager(componentManager: ComponentManager[_]) = {
     componentManagers -= componentManager
   }
 

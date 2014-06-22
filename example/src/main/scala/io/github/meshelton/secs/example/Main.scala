@@ -16,18 +16,18 @@ object Main extends App {
 
   println("Entity 1 at position (5, 100) with no initial velocity and subject to gravity")
   val entity1 = entityManager()
-  posCompMan.addComponent(entity1).moveTo(5, 100)
-  velCompMan.addComponent(entity1)
-  gravCompMan.addComponent(entity1)
+  posCompMan.addComponent(entity1, PositionComponent(5, 100))
+  velCompMan.addComponent(entity1, VelocityComponent(0, 0))
+  gravCompMan.addComponent(entity1,GravityComponent())
 
   println("Entity 2 at position (5, 5) with initial velocity (1, 1)")
   val entity2 = entityManager()
-  posCompMan.addComponent(entity2).moveTo(5, 5)
-  velCompMan.addComponent(entity2).set(1, 1)
+  posCompMan.addComponent(entity2, PositionComponent(5, 5))
+  velCompMan.addComponent(entity2, VelocityComponent(1, 1))
 
   println("Entity 3 subject to gravity")
   val entity3 = entityManager()
-  gravCompMan.addComponent(entity3)
+  gravCompMan.addComponent(entity3, GravityComponent())
 
   for( x <- 0 to 10 ){
     entityManager.update(0.3f)
@@ -87,9 +87,8 @@ class PositionSystem(eM: EntityManager,
 
 case class GravityComponent() extends Component
 
-class GravityComponentManager(em: EntityManager) extends ComponentManager(em) {
+class GravityComponentManager(em: EntityManager) extends ComponentManager[GravityComponent](em) {
   type TypeOfComponent = GravityComponent
-  def buildComponent() = new GravityComponent
 }
 
 case class VelocityComponent(var x: Float, var y: Float) extends Component{
@@ -99,9 +98,8 @@ case class VelocityComponent(var x: Float, var y: Float) extends Component{
   }
 }
 
-class VelocityComponentManager(em: EntityManager) extends ComponentManager(em) {
+class VelocityComponentManager(em: EntityManager) extends ComponentManager[VelocityComponent](em) {
   type TypeOfComponent = VelocityComponent
-  def buildComponent() = new VelocityComponent(0, 0)
 }
 
 case class PositionComponent(var x: Float, var y: Float) extends Component {
@@ -116,7 +114,6 @@ case class PositionComponent(var x: Float, var y: Float) extends Component {
   def getPoint(): (Float, Float) = (x, y)
 }
 
-class PositionComponentManager(em: EntityManager) extends ComponentManager(em) {
+class PositionComponentManager(em: EntityManager) extends ComponentManager[PositionComponent](em) {
   type TypeOfComponent = PositionComponent
-  def buildComponent() = new PositionComponent(0, 0)
 }
