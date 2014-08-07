@@ -8,7 +8,8 @@ package io.github.meshelton.secs
   * @constructor creates a new system registered to the [[io.github.meshelton.secs.EntityManager EntityManager]]
   * @param entityManager the EntityManager that this system is registered to
   */
-abstract class System(val entityManager: EntityManager) {
+trait System {
+  implicit val entityManager: EntityManager
   /**
     * Should this System be updating
     */

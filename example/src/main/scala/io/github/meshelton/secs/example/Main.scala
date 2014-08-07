@@ -2,82 +2,87 @@ package io.github.meshelton.secs.example
 import io.github.meshelton.secs._
 
 object Main extends App {
+  // The entity manager for the application
+  implicit val entityManager = new EntityManager()
 
-  val entityManager = new EntityManager()
+  // The component managers, one for each type of component
+  implicit val velCompMan = new ComponentManager[VelocityComponent]()
+  implicit val posCompMan = new ComponentManager[PositionComponent]()
+  implicit val gravCompMan = new ComponentManager[GravityComponent]()
 
-  val velCompMan = new VelocityComponentManager(entityManager)
-  val posCompMan = new PositionComponentManager(entityManager)
-  val gravCompMan = new GravityComponentManager(entityManager)
-
-  val gravSystem = new GravitySystem(entityManager, gravCompMan, velCompMan, -9.8f)
+  // The system that are implicitly passed the component managers they are interested in
+  val gravSystem = new GravitySystem(-9.8f)
   gravSystem.updating = true
-  val posSystem = new PositionSystem(entityManager, velCompMan, posCompMan)
+  val posSystem = new PositionSystem()
   posSystem.updating = true
 
   println("Entity 1 at position (5, 100) with no initial velocity and subject to gravity")
-  val entity1 = entityManager()
-  posCompMan.addComponent(entity1, PositionComponent(5, 100))
-  velCompMan.addComponent(entity1, VelocityComponent(0, 0))
-  gravCompMan.addComponent(entity1,GravityComponent())
+  // Creating an entity implicitly using hte entity manager
+  val entity1 = Entity.create
+
+  entity1.addComponent(PositionComponent(5, 100))
+    .addComponent(VelocityComponent(0, 0))
+    .addComponent(GravityComponent())
+
+  println()
 
   println("Entity 2 at position (5, 5) with initial velocity (1, 1)")
-  val entity2 = entityManager()
-  posCompMan.addComponent(entity2, PositionComponent(5, 5))
-  velCompMan.addComponent(entity2, VelocityComponent(1, 1))
+  val entity2 = Entity.create
+  entity2.addComponent(PositionComponent(5, 5))
+    .addComponent(VelocityComponent(1, 1))
 
   println("Entity 3 subject to gravity")
-  val entity3 = entityManager()
-  gravCompMan.addComponent(entity3, GravityComponent())
+  val entity3 = Entity.create
+  entity3.addComponent(GravityComponent())
 
   for( x <- 0 to 10 ){
     entityManager.update(0.3f)
 
     println("After a 1 second update")
-    posCompMan(entity1) match {
-      case Some(posComp) => println(s"Entity1 at Pos(${posComp.x}, ${posComp.y})")
-      case None => println("Entity1 does not have a position component")
-    }
 
-    posCompMan(entity2) match {
-      case Some(posComp) => println(s"Entity2 at Pos(${posComp.x}, ${posComp.y})")
-      case None => println("Entity2 does not have a position component")
-    }
+    entity1.getComponents[PositionComponent].foreach(
+      (posComp) => println(s"Entity1 at Pos(${posComp.x}, ${posComp.y})")
+    )
 
-    posCompMan(entity3) match {
-      case Some(posComp) => println(s"Entity3 at Pos(${posComp.x}, ${posComp.y})")
-      case None => println("Entity3 does not have a position component")
-    }
+    entity2.getComponents[PositionComponent].foreach(
+      (posComp) => println(s"Entity2 at Pos(${posComp.x}, ${posComp.y})")
+    )
+
+    entity3.getComponents[PositionComponent].foreach(
+      (posComp) => println(s"Entity3 at Pos(${posComp.x}, ${posComp.y})")
+    )
+
   }
 }
 
-class GravitySystem(eM: EntityManager,
-                    val gravityCompManager: GravityComponentManager,
-                    val velocityCompManager: VelocityComponentManager,
-                    val accel: Float) extends System(eM) {
+class GravitySystem(val accel: Float)
+                   (implicit val gravCompManager: ComponentManager[GravityComponent],
+                    val velCompManager: ComponentManager[VelocityComponent],
+                    em: EntityManager ) extends System {
+
   def update(delta: Float) = {
-    gravityCompManager.getEntities().foreach(
+    val entities = gravCompManager.getEntities()
+    entities.foreach(
       (entity) => {
-        for( velComp <- velocityCompManager.getComponent(entity) ){
-          velComp.y += accel * delta
-        }
+        entity.getComponents[VelocityComponent].foreach( _.y += accel * delta)
       }
     )
   }
+
 }
 
-class PositionSystem(eM: EntityManager,
-                     val velocityCompManager: VelocityComponentManager,
-                     val positionCompManager: PositionComponentManager ) extends System(eM){
+class PositionSystem(implicit val velCompManager: ComponentManager[VelocityComponent],
+                     val posCompManager: ComponentManager[PositionComponent],
+                     em: EntityManager ) extends System {
 
   def update(delta: Float) = {
-    positionCompManager.getEntities().foreach(
+    val entities = posCompManager() & velCompManager()
+    entities.foreach(
       (entity) => {
-        val posCompOpt = positionCompManager.getComponent(entity)
-        val velCompOpt = velocityCompManager.getComponent(entity)
-
-        for( posComp <- posCompOpt ; VelocityComponent(velX, velY) <- velCompOpt ) {
-          posComp.y += velY * delta
-          posComp.x += velX * delta
+        for( posComp <- entity.getComponents[PositionComponent];
+             velComp <- entity.getComponents[VelocityComponent] ){
+          posComp.y += velComp.y * delta
+          posComp.x += velComp.x * delta
         }
       }
     )
@@ -87,19 +92,11 @@ class PositionSystem(eM: EntityManager,
 
 case class GravityComponent() extends Component
 
-class GravityComponentManager(em: EntityManager) extends ComponentManager[GravityComponent](em) {
-  type TypeOfComponent = GravityComponent
-}
-
 case class VelocityComponent(var x: Float, var y: Float) extends Component{
   def set(x: Float, y: Float){
     this.x = x
     this.y = y
   }
-}
-
-class VelocityComponentManager(em: EntityManager) extends ComponentManager[VelocityComponent](em) {
-  type TypeOfComponent = VelocityComponent
 }
 
 case class PositionComponent(var x: Float, var y: Float) extends Component {
@@ -112,8 +109,4 @@ case class PositionComponent(var x: Float, var y: Float) extends Component {
     y += dy
   }
   def getPoint(): (Float, Float) = (x, y)
-}
-
-class PositionComponentManager(em: EntityManager) extends ComponentManager[PositionComponent](em) {
-  type TypeOfComponent = PositionComponent
 }

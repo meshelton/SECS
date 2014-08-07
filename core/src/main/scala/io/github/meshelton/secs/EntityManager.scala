@@ -8,12 +8,41 @@ import scala.collection.mutable.{ArrayBuffer, HashMap}
   * 
   * Represents an entity and stores some metadata for it.
   * These should only be created by a [[io.github.meshelton.secs.EntityManager EntityManager]]
-  * 
-  * @constructor create a new [[io.github.meshelton.secs.Entity]] with a UUID and usertag
-  * @param id the entities UUID
-  * @param tag the userdata, optional with a defualt value of "No tag provided"
   */
-case class Entity protected[secs](val id: UUID, val tag: String = "No tag provided")
+class Entity protected[secs](id: UUID, 
+                             entityManager: EntityManager,
+                             tag: String = "No tag provided"){
+
+  def addComponent[T <: Component](component: T)
+                  (implicit compManager: ComponentManager[T]): Entity = {
+    compManager.addComponent(this, component)
+    this
+  }
+
+  def removeComponent[T <: Component](component: T)
+                     (implicit compManager: ComponentManager[T]): Entity = {
+    compManager.removeComponent(this)
+    this
+  }
+
+  def getComponent[T <: Component](implicit compManager: ComponentManager[T]): Option[T] = {
+    compManager.getComponent(this)
+  }
+
+  def getAllComponents(): List[Component] = {
+    entityManager.getComponentsOfEntity(this)
+  }
+
+}
+
+object Entity {
+  def create(implicit entityManager: EntityManager): Entity = {
+    entityManager.createEntity()
+  }
+  def destroy(entity: Entity)(implicit entityManager: EntityManager) = {
+    entityManager.destroyEntity(entity)
+  }
+}
 
 /**
   * A managers of entities
@@ -44,15 +73,6 @@ class EntityManager {
   def apply(tag: String) = createEntity(tag)
 
   /**
-    * Destroys the passed in [[io.github.meshelton.secs.Entity]]
-    * 
-    * Removes the passed in Entity from this and all registered ComponentManagers
-    * 
-    * @param entity the Entity to destroy
-    */
-  def apply(entity: Entity) = destroyEntity(entity)
-
-  /**
     * Creates a new Entity with supplied tag
     * 
     * @param tag the userdata
@@ -69,15 +89,15 @@ class EntityManager {
 
   private def createEntity(tag: Option[String]): Entity = {
     val newEntity = tag match {
-        case Some(x) => new Entity(UUID.randomUUID(), x)
-        case None => new Entity(UUID.randomUUID())
+        case Some(x) => new Entity(UUID.randomUUID(), this, x)
+        case None => new Entity(UUID.randomUUID(), this)
       }
     entities += newEntity
     newEntity
   }
 
   /**
-    * Destroys the passed in [[io.github.meshelton.secs.Entity]]
+    * Destroys the passed in [[io.github.meshelton.secs.Entity Entity]]
     * 
     * Removes the passed in Entity from this and all registered ComponentManagers
     * 
@@ -86,6 +106,22 @@ class EntityManager {
   def destroyEntity(entity: Entity) = {
     entities -= entity
     componentManagers.foreach( _.removeComponent(entity) )
+  }
+
+  /**
+    * Gets all the components that are associated with the passed in Entity
+    * 
+    * Pattern matching can be used to get the component types of this sequence
+    * 
+    * @param entity the Entity that the components are associated with
+    * @return A sequence of the components that are associated with this entity
+    */
+  def getComponentsOfEntity(entity: Entity): List[Component] = {
+    componentManagers.map(_(entity)).flatten.map{ (comp) => 
+      (comp: @unchecked ) match {
+        case Some(x: Component) => x
+      }
+    }.toList
   }
 
   /**
