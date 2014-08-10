@@ -13,23 +13,23 @@ class Entity protected[secs](id: UUID,
                              entityManager: EntityManager,
                              tag: String = "No tag provided"){
 
-  def addComponent[T <: Component](component: T)
-                  (implicit compManager: ComponentManager[T]): Entity = {
+  def add[T <: Component](component: T)
+         (implicit compManager: ComponentManager[T]): Entity = {
     compManager.addComponent(this, component)
     this
   }
 
-  def removeComponent[T <: Component](component: T)
+  def remove[T <: Component](component: T)
                      (implicit compManager: ComponentManager[T]): Entity = {
     compManager.removeComponent(this)
     this
   }
 
-  def getComponent[T <: Component](implicit compManager: ComponentManager[T]): Option[T] = {
+  def get[T <: Component](implicit compManager: ComponentManager[T]): Option[T] = {
     compManager.getComponent(this)
   }
-
-  def getAllComponents(): List[Component] = {
+  
+  def getAll(): List[Component] = {
     entityManager.getComponentsOfEntity(this)
   }
 

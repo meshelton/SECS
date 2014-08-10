@@ -10,6 +10,7 @@ package io.github.meshelton.secs
   */
 trait System {
   implicit val entityManager: EntityManager
+
   /**
     * Should this System be updating
     */
