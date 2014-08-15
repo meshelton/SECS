@@ -6,11 +6,9 @@ import scala.collection.mutable.{ArrayBuffer, HashMap}
 /**
   * A Component
   * 
-  * Represents a component. There be a class that implements a desired component
-  * and a instance of [[io.github.meshelton.secs.ComponentManager ComponentManager]]
   * Components should only store mutable data and only have getter and setter methods
   */
-trait Component
+trait Component 
 
 /**
   * Manages a type of componenet
@@ -20,10 +18,9 @@ trait Component
   * Ideally should not be subclassed 
   * 
   * @constructor Creates a new ComponentManager registered to a EntityManager
-  * @param entityManager The [[io.github.meshelton.secs.EntityManager EntityManager]] that this component manager will be registered to. It is implicit passed in so you have to make your entity manager availble to it
+  * @param entityManager The [[io.github.meshelton.secs.EntityManager EntityManager]] that this component manager will be registered to. It is implicitly passed in so you have to make your entity manager availble to it
   */
 class ComponentManager[ComponentType <: Component](implicit val entityManager: EntityManager) {
-
 
   entityManager.registerComponentManager(this)
 
@@ -54,6 +51,10 @@ class ComponentManager[ComponentType <: Component](implicit val entityManager: E
   def addComponent(entity: Entity, component: ComponentType): ComponentType = {
     components(entity) = component
     component
+  }
+
+  def update(entity: Entity, component: ComponentType): Unit = {
+    addComponent(entity, component)
   }
 
   /**
