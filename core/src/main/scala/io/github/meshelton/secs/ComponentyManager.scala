@@ -20,7 +20,7 @@ trait Component
   * @constructor Creates a new ComponentManager registered to a EntityManager
   * @param entityManager The [[io.github.meshelton.secs.EntityManager EntityManager]] that this component manager will be registered to. It is implicitly passed in so you have to make your entity manager availble to it
   */
-class ComponentManager[ComponentType <: Component](implicit val entityManager: EntityManager) {
+class ComponentManager[ComponentType <: Component](implicit val entityManager: EntityManager){
 
   entityManager.registerComponentManager(this)
 
@@ -84,8 +84,8 @@ class ComponentManager[ComponentType <: Component](implicit val entityManager: E
     * 
     * @return all the components managed by this ComponentManager
     */
-  def getAllComponents(): Set[ComponentType] = {
-    components.values.toSet
+  def getAllComponents(): List[ComponentType] = {
+    components.values.toList
   }
 
   /**
@@ -93,7 +93,7 @@ class ComponentManager[ComponentType <: Component](implicit val entityManager: E
     * 
     * @return all the entities that have components managed by this ComponentManager
     */
-  def getEntities(): scala.collection.Set[Entity] = {
-    components.keySet
+  def getEntities(): List[Entity] = {
+    components.keys.toList
   }
 }
