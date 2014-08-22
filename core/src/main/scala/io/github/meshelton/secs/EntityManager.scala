@@ -9,7 +9,7 @@ import scala.collection.mutable.{ArrayBuffer, HashMap}
   * Represents an entity and stores some metadata for it.
   * These should only be created by a [[io.github.meshelton.secs.EntityManager EntityManager]]
   */
-class Entity protected[secs](id: UUID, 
+class Entity protected[secs](val id: String, 
                              entityManager: EntityManager,
                              tag: String = "No tag provided"){
 
@@ -89,8 +89,8 @@ class EntityManager {
 
   private def createEntity(tag: Option[String]): Entity = {
     val newEntity = tag match {
-        case Some(x) => new Entity(UUID.randomUUID(), this, x)
-        case None => new Entity(UUID.randomUUID(), this)
+        case Some(x) => new Entity(UUID.randomUUID().toString, this, x)
+        case None => new Entity(UUID.randomUUID().toString, this)
       }
     entities += newEntity
     newEntity
