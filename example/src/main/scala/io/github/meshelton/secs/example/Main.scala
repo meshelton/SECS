@@ -20,67 +20,65 @@ object Main extends App {
   // Creating an entity implicitly using hte entity manager
   val entity1 = Entity.create
 
-  entity1.addComponent(PositionComponent(5, 100))
-    .addComponent(VelocityComponent(0, 0))
-    .addComponent(GravityComponent())
+  entity1.add(PositionComponent(5, 100))
+    .add(VelocityComponent(0, 0))
+    .add(GravityComponent())
 
   println()
 
   println("Entity 2 at position (5, 5) with initial velocity (1, 1)")
   val entity2 = Entity.create
-  entity2.addComponent(PositionComponent(5, 5))
-    .addComponent(VelocityComponent(1, 1))
+  entity2.add(PositionComponent(5, 5))
+    .add(VelocityComponent(1, 1))
 
   println("Entity 3 subject to gravity")
   val entity3 = Entity.create
-  entity3.addComponent(GravityComponent())
+  entity3.add(GravityComponent())
 
   for( x <- 0 to 10 ){
     entityManager.update(0.3f)
 
     println("After a 1 second update")
 
-    entity1.getComponents[PositionComponent].foreach(
-      (posComp) => println(s"Entity1 at Pos(${posComp.x}, ${posComp.y})")
-    )
+    entity1.get[PositionComponent].foreach{ posComp => 
+      println(s"Entity1 at Pos(${posComp.x}, ${posComp.y})")
+    }
 
-    entity2.getComponents[PositionComponent].foreach(
-      (posComp) => println(s"Entity2 at Pos(${posComp.x}, ${posComp.y})")
-    )
+    entity2.get[PositionComponent].foreach{ posComp => 
+      println(s"Entity2 at Pos(${posComp.x}, ${posComp.y})")
+    }
 
-    entity3.getComponents[PositionComponent].foreach(
-      (posComp) => println(s"Entity3 at Pos(${posComp.x}, ${posComp.y})")
-    )
-
+    entity3.get[PositionComponent].foreach{ posComp => 
+      println(s"Entity3 at Pos(${posComp.x}, ${posComp.y})")
+    }
   }
 }
 
 class GravitySystem(val accel: Float)
                    (implicit val gravCompManager: ComponentManager[GravityComponent],
                     val velCompManager: ComponentManager[VelocityComponent],
-                    em: EntityManager ) extends System {
+                    val entityManager: EntityManager ) extends System {
 
   def update(delta: Float) = {
     val entities = gravCompManager.getEntities()
-    entities.foreach(
-      (entity) => {
-        entity.getComponents[VelocityComponent].foreach( _.y += accel * delta)
+    entities.foreach{ entity => {
+        entity.get[VelocityComponent].foreach( _.y += accel * delta )
       }
-    )
+    }
   }
 
 }
 
 class PositionSystem(implicit val velCompManager: ComponentManager[VelocityComponent],
                      val posCompManager: ComponentManager[PositionComponent],
-                     em: EntityManager ) extends System {
+                     val entityManager: EntityManager ) extends System {
 
   def update(delta: Float) = {
-    val entities = posCompManager() & velCompManager()
+    val entities = posCompManager() intersect velCompManager()
     entities.foreach(
       (entity) => {
-        for( posComp <- entity.getComponents[PositionComponent];
-             velComp <- entity.getComponents[VelocityComponent] ){
+        for( posComp <- entity.get[PositionComponent];
+             velComp <- entity.get[VelocityComponent] ){
           posComp.y += velComp.y * delta
           posComp.x += velComp.x * delta
         }
